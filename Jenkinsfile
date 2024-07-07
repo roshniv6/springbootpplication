@@ -5,12 +5,13 @@ pipeline {
         DOCKER_IMAGE = "roshniaishu6/springbootpplication:latest"
         DOCKER_REGISTRY_CREDENTIALS_ID = 'docker-registry-credentials'
         KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-credentials'
+        GIT_CREDENTIALS_ID = 'github-credentials'
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/roshniv6/springbootpplication.git'
+                git credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com/roshniv6/springbootpplication.git'
             }
         }
 
@@ -46,8 +47,8 @@ pipeline {
                 script {
                     withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
                         sh '''
-                            kubectl set image deployment/springbootapp \
-                            springbootapp=${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
+                            kubectl set image deployment/your-deployment-name \
+                            your-container-name=${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
                             --record
                         '''
                     }
