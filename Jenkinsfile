@@ -27,7 +27,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    sh "docker build -t ${DOCKER_IMAGE}:${env.BUILD_NUMBER} ."
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER} ."
                 }
             }
         }
@@ -36,7 +36,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', DOCKER_REGISTRY_CREDENTIALS_ID) {
-                        sh "docker push ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                        sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER}"
                     }
                 }
             }
@@ -48,7 +48,7 @@ pipeline {
                     withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
                         sh '''
                             kubectl set image deployment/springbootapp \
-                            springbootapp=${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
+                            springbootapp=${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER} \
                             --record
                         '''
                     }
