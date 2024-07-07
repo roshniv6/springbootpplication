@@ -47,8 +47,8 @@ pipeline {
                 script {
                     withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
                         sh '''
-                            kubectl set image deployment/your-deployment-name \
-                            your-container-name=${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
+                            kubectl set image deployment/springbootapp \
+                            springbootapp=${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
                             --record
                         '''
                     }
