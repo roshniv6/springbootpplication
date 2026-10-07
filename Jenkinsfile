@@ -12,6 +12,22 @@ pipeline {
     }
 
     stages {
+        stage('Check Environment') {
+            steps {
+                script {
+                    echo "=== Checking available commands ==="
+                    // This prints the current user running the job
+                    sh 'whoami'
+                    
+                    // This tests if 'docker' exists in the current system path
+                    try {
+                        sh 'docker --version'
+                    } catch (Exception e) {
+                        echo "Diagnostic Result: The 'docker' command is definitely NOT installed or accessible in this environment path yet."
+                    }
+                }
+            }
+        }
         stage('Clone Repository') {
             steps {
                 git branch: 'main', credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com/roshniv6/springbootpplication.git'
