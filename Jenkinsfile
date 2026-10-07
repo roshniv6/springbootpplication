@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+tools {
+        maven 'maven-3.8.8' 
+    }
     environment {
         DOCKER_IMAGE = "roshniaishu6/springbootpplication:latest"
         DOCKER_REGISTRY_CREDENTIALS_ID = 'docker-registry-credentials'
