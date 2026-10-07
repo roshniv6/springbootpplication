@@ -4,7 +4,6 @@ pipeline {
         maven 'maven-3.8.8' 
     }
     environment {
-        // FIXED: Removed ':latest' from the image name to prevent the double-colon error
         DOCKER_IMAGE = "roshniaishu6/springbootpplication"
         DOCKER_REGISTRY_CREDENTIALS_ID = 'docker-registry-credentials'
         GIT_CREDENTIALS_ID = 'github-credentials'
@@ -12,25 +11,9 @@ pipeline {
     }
 
     stages {
-        stage('Check Environment') {
-            steps {
-                script {
-                    echo "=== Checking available commands ==="
-                    // This prints the current user running the job
-                    sh 'whoami'
-                    
-                    // This tests if 'docker' exists in the current system path
-                    try {
-                        sh 'docker --version'
-                    } catch (Exception e) {
-                        echo "Diagnostic Result: The 'docker' command is definitely NOT installed or accessible in this environment path yet."
-                    }
-                }
-            }
-        }
         stage('Clone Repository') {
             steps {
-                git branch: 'main', credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com/roshniv6/springbootpplication.git'
+                git branch: 'main', credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com'
             }
         }
 
@@ -45,8 +28,20 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    // This now correctly evaluates to: roshniaishu6/springbootpplication:latest-2
-                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER} ."
+                    // 1. Download official static Docker CLI binary if it doesn't exist in workspace
+                    sh '''
+                        if [ ! -f ./docker/docker ]; then
+                            echo "Downloading static Docker CLI binary..."
+                            curl -fsSL https://docker.com -o docker.tgz
+                            tar -xzvf docker.tgz docker/docker
+                            rm docker.tgz
+                        fi
+                    '''
+                    
+                    // 2. Add the downloaded binary path to the environment PATH variable
+                    withEnv(["PATH+DOCKER=${WORKSPACE}/docker"]) {
+                        sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER} ."
+                    }
                 }
             }
         }
@@ -54,8 +49,11 @@ pipeline {
         stage('Docker Push') {
             steps {
                 script {
-                    docker.withRegistry('', DOCKER_REGISTRY_CREDENTIALS_ID) {
-                        sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER}"
+                    // Use the same binary path wrapper to authorize and push
+                    withEnv(["PATH+DOCKER=${WORKSPACE}/docker"]) {
+                        docker.withRegistry('', DOCKER_REGISTRY_CREDENTIALS_ID) {
+                            sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER}"
+                        }
                     }
                 }
             }
