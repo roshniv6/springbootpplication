@@ -19,11 +19,10 @@ pipeline {
 
         stage('Maven Build') {
             steps {
-                script {
-                  'bat 'mvn clean package''
-                }
+                bat 'mvn clean package'
             }
         }
+
 
         stage('Docker Build') {
             steps {
