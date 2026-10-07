@@ -1,10 +1,11 @@
 pipeline {
     agent any
-tools {
+    tools {
         maven 'maven-3.8.8' 
     }
     environment {
-        DOCKER_IMAGE = "roshniaishu6/springbootpplication:latest"
+        // FIXED: Removed ':latest' from the image name to prevent the double-colon error
+        DOCKER_IMAGE = "roshniaishu6/springbootpplication"
         DOCKER_REGISTRY_CREDENTIALS_ID = 'docker-registry-credentials'
         GIT_CREDENTIALS_ID = 'github-credentials'
         DOCKER_TAG = "latest"
@@ -13,7 +14,7 @@ tools {
     stages {
         stage('Clone Repository') {
             steps {
-              git branch: 'main', credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com/roshniv6/springbootpplication.git'
+                git branch: 'main', credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com/roshniv6/springbootpplication.git'
             }
         }
 
@@ -28,6 +29,7 @@ tools {
         stage('Docker Build') {
             steps {
                 script {
+                    // This now correctly evaluates to: roshniaishu6/springbootpplication:latest-2
                     sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER} ."
                 }
             }
