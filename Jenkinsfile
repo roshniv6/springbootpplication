@@ -2,6 +2,7 @@ pipeline {
     agent any
     tools {
         maven 'maven-3.8.8' 
+        jdk 'java'
     }
     environment {
         DOCKER_IMAGE = "roshniaishu6/springbootpplication"
@@ -23,24 +24,10 @@ pipeline {
             }
         }
 
-
         stage('Docker Build') {
             steps {
                 script {
-                    // 1. Download official static Docker CLI binary if it doesn't exist in workspace
-                    sh '''
-                        if [ ! -f ./docker/docker ]; then
-                            echo "Downloading static Docker CLI binary..."
-                            curl -fsSL https://docker.com -o docker.tgz
-                            tar -xzvf docker.tgz docker/docker
-                            rm docker.tgz
-                        fi
-                    '''
-                    
-                    // 2. Add the downloaded binary path to the environment PATH variable
-                    withEnv(["PATH+DOCKER=${WORKSPACE}/docker"]) {
-                        sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER} ."
-                    }
+                    bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER} ."
                 }
             }
         }
@@ -48,11 +35,9 @@ pipeline {
         stage('Docker Push') {
             steps {
                 script {
-                    // Use the same binary path wrapper to authorize and push
-                    withEnv(["PATH+DOCKER=${WORKSPACE}/docker"]) {
-                        docker.withRegistry('', DOCKER_REGISTRY_CREDENTIALS_ID) {
-                            sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER}"
-                        }
+                    withCredentials([usernamePassword(credentialsId: DOCKER_REGISTRY_CREDENTIALS_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
+                        bat "docker login -u %DOCKER_USER% -p %DOCKER_PASSWORD%"
+                        bat "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}-${env.BUILD_NUMBER}"
                     }
                 }
             }
